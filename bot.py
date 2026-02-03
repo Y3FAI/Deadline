@@ -1,15 +1,17 @@
 import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, ContextTypes
 import dateparser
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from db import init_db, add_deadline, get_all_deadlines, get_soon_deadlines, delete_deadline
 from display import get_effective_dates, format_grouped, format_with_ids
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
-OWNER_ID = 5909931243
+OWNER_ID = int(os.getenv("OWNER_ID"))
+CHAT_ID = int(os.getenv("CHAT_ID"))
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -146,6 +148,29 @@ async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Deleted ✓")
 
 
+async def check_reminders(bot: Bot):
+    """Check for deadlines and send reminders."""
+    deadlines = get_all_deadlines()
+    now = datetime.now()
+
+    for id, name, class_name, start, due, link, recurring in deadlines:
+        _, due_dt = get_effective_dates(start, due, recurring)
+        hours_until = (due_dt - now).total_seconds() / 3600
+
+        # 24h reminder: due in 23-24 hours
+        if 23 <= hours_until < 24:
+            await bot.send_message(
+                CHAT_ID,
+                f"⏰ 24h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}"
+            )
+        # 1h reminder: due in 1-2 hours
+        elif 1 <= hours_until < 2:
+            await bot.send_message(
+                CHAT_ID,
+                f"🚨 1h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}"
+            )
+
+
 def main():
     init_db()
     app = Application.builder().token(TOKEN).build()
@@ -155,6 +180,11 @@ def main():
     app.add_handler(CommandHandler("today", today))
     app.add_handler(CommandHandler("soon", soon))
     app.add_handler(CommandHandler("delete", delete))
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_reminders, "interval", hours=1, args=[app.bot])
+    scheduler.start()
+
     app.run_polling()
 
 

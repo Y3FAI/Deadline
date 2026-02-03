@@ -11,6 +11,8 @@ uv sync
 Create `.env`:
 ```
 BOT_TOKEN=your_token_here
+OWNER_ID=123456789
+CHAT_ID=123456789
 ```
 
 Run:
