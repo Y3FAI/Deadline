@@ -4,26 +4,12 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import dateparser
-from db import init_db, add_deadline, get_all_deadlines, delete_deadline
+from db import init_db, add_deadline, get_all_deadlines, get_soon_deadlines, delete_deadline
+from display import get_effective_dates, format_grouped, format_with_ids
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 5909931243
-
-
-def get_next_weekday_occurrence(dt):
-    """Get the next occurrence of a weekday-based datetime."""
-    now = datetime.now()
-    target_weekday = dt.weekday()
-    days_ahead = target_weekday - now.weekday()
-    if days_ahead < 0:
-        days_ahead += 7
-    elif days_ahead == 0:
-        target_time = dt.replace(year=now.year, month=now.month, day=now.day)
-        if target_time <= now:
-            days_ahead = 7
-    next_date = now + timedelta(days=days_ahead)
-    return next_date.replace(hour=dt.hour, minute=dt.minute, second=0, microsecond=0)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -82,24 +68,7 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text:
         if text == "id" and is_owner:
-            lines = ["Deadlines with IDs:\n"]
-            for id, name, class_name, start, due, link, recurring in deadlines:
-                start_dt = dateparser.parse(start)
-                due_dt = dateparser.parse(due)
-                if recurring == "weekly":
-                    start_dt = get_next_weekday_occurrence(start_dt)
-                    due_dt = get_next_weekday_occurrence(due_dt)
-                start_formatted = start_dt.strftime("%b %d, %I:%M %p")
-                due_formatted = due_dt.strftime("%b %d, %I:%M %p")
-                line = f"ID: {id}\n  📝 {name}"
-                if recurring:
-                    line += " 🔁"
-                line += f"\n  🟢 {start_formatted}\n  🔴 {due_formatted}"
-                if link:
-                    line += f"\n  🔗 {link}"
-                lines.append(line)
-                lines.append("")
-            await update.message.reply_text("\n".join(lines))
+            await update.message.reply_text(format_with_ids(deadlines))
             return
 
         deadlines = [d for d in deadlines if d[2].lower() == text.lower()]
@@ -107,36 +76,53 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"No deadlines for {text}")
             return
 
-    grouped = {}
-    for id, name, class_name, start, due, link, recurring in deadlines:
-        if class_name not in grouped:
-            grouped[class_name] = []
-        grouped[class_name].append((id, name, start, due, link, recurring))
+    await update.message.reply_text(format_grouped(deadlines))
 
-    lines = []
-    for class_name, items in grouped.items():
-        lines.append(f"📚 {class_name}\n")
-        for id, name, start, due, link, recurring in items:
-            start_dt = dateparser.parse(start)
-            due_dt = dateparser.parse(due)
-            if recurring == "weekly":
-                start_dt = get_next_weekday_occurrence(start_dt)
-                due_dt = get_next_weekday_occurrence(due_dt)
-            start_formatted = start_dt.strftime("%b %d, %I:%M %p")
-            due_formatted = due_dt.strftime("%b %d, %I:%M %p")
-            line = f"  📝 {name}"
-            if recurring:
-                line += " 🔁"
-            line += f"\n  🟢 {start_formatted}\n  🔴 {due_formatted}"
-            if link:
-                line += f"\n  🔗 {link}"
-            lines.append(line)
-            lines.append("")
-        lines.append("━━━━━━━━━━━━━━━\n")
 
-    lines = lines[:-1]
+async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    deadlines = get_soon_deadlines(days=1)
 
-    await update.message.reply_text("\n".join(lines))
+    if not deadlines:
+        await update.message.reply_text("No deadlines today 🎉")
+        return
+
+    now = datetime.now()
+    filtered = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt.date() == now.date():
+            filtered.append(d)
+
+    if not filtered:
+        await update.message.reply_text("No deadlines today 🎉")
+        return
+
+    await update.message.reply_text(format_grouped(filtered))
+
+
+async def soon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    deadlines = get_soon_deadlines(days=7)
+
+    if not deadlines:
+        await update.message.reply_text("No deadlines in the next 7 days 🎉")
+        return
+
+    # Filter recurring deadlines to only those due within 7 days
+    now = datetime.now()
+    cutoff = now + timedelta(days=7)
+    filtered = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt <= cutoff:
+            filtered.append(d)
+
+    if not filtered:
+        await update.message.reply_text("No deadlines in the next 7 days 🎉")
+        return
+
+    await update.message.reply_text(format_grouped(filtered))
 
 
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -166,6 +152,8 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("add", add))
     app.add_handler(CommandHandler("list", list_deadlines))
+    app.add_handler(CommandHandler("today", today))
+    app.add_handler(CommandHandler("soon", soon))
     app.add_handler(CommandHandler("delete", delete))
     app.run_polling()
 

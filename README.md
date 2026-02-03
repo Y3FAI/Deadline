@@ -27,5 +27,7 @@ python bot.py
 /list
 /list Math
 /list id
+/today
+/soon
 /delete id
 ```

@@ -43,6 +43,24 @@ def get_all_deadlines():
     return rows
 
 
+def get_soon_deadlines(days=7):
+    """Get non-recurring deadlines due within `days` + all recurring deadlines."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, name, class, start, due, link, recurring FROM deadlines
+        WHERE recurring IS NOT NULL
+           OR due <= datetime('now', '+' || ? || ' days')
+        ORDER BY due
+        """,
+        (days,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
 def delete_deadline(id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
