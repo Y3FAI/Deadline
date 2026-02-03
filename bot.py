@@ -103,11 +103,34 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(format_grouped(filtered))
 
 
-async def soon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def month(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    deadlines = get_soon_deadlines(days=30)
+
+    if not deadlines:
+        await update.message.reply_text("No deadlines this month 🎉")
+        return
+
+    now = datetime.now()
+    cutoff = now + timedelta(days=30)
+    filtered = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt <= cutoff:
+            filtered.append(d)
+
+    if not filtered:
+        await update.message.reply_text("No deadlines this month 🎉")
+        return
+
+    await update.message.reply_text(format_grouped(filtered))
+
+
+async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await update.message.reply_text("No deadlines in the next 7 days 🎉")
+        await update.message.reply_text("No deadlines this week 🎉")
         return
 
     # Filter recurring deadlines to only those due within 7 days
@@ -121,7 +144,7 @@ async def soon(update: Update, context: ContextTypes.DEFAULT_TYPE):
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("No deadlines in the next 7 days 🎉")
+        await update.message.reply_text("No deadlines this week 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -171,6 +194,31 @@ async def check_reminders(bot: Bot):
             )
 
 
+async def weekly_summary(bot: Bot):
+    """Send weekly summary of upcoming deadlines."""
+    deadlines = get_soon_deadlines(days=7)
+
+    if not deadlines:
+        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉")
+        return
+
+    now = datetime.now()
+    cutoff = now + timedelta(days=7)
+    filtered = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt <= cutoff:
+            filtered.append(d)
+
+    if not filtered:
+        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉")
+        return
+
+    msg = "📅 Weekly Summary\n\n" + format_grouped(filtered)
+    await bot.send_message(CHAT_ID, msg)
+
+
 def main():
     init_db()
     app = Application.builder().token(TOKEN).build()
@@ -178,11 +226,13 @@ def main():
     app.add_handler(CommandHandler("add", add))
     app.add_handler(CommandHandler("list", list_deadlines))
     app.add_handler(CommandHandler("today", today))
-    app.add_handler(CommandHandler("soon", soon))
+    app.add_handler(CommandHandler("week", week))
+    app.add_handler(CommandHandler("month", month))
     app.add_handler(CommandHandler("delete", delete))
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_reminders, "interval", hours=1, args=[app.bot])
+    scheduler.add_job(weekly_summary, "cron", day_of_week="sat", hour=17, args=[app.bot])
     scheduler.start()
 
     app.run_polling()
