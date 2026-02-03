@@ -13,19 +13,20 @@ def init_db():
             class TEXT NOT NULL,
             start TIMESTAMP NOT NULL,
             due TIMESTAMP NOT NULL,
-            link TEXT
+            link TEXT,
+            recurring TEXT
         )
     """)
     conn.commit()
     conn.close()
 
 
-def add_deadline(name, class_name, start, due, link=None):
+def add_deadline(name, class_name, start, due, link=None, recurring=None):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO deadlines (name, class, start, due, link) VALUES (?, ?, ?, ?, ?)",
-        (name, class_name, start, due, link),
+        "INSERT INTO deadlines (name, class, start, due, link, recurring) VALUES (?, ?, ?, ?, ?, ?)",
+        (name, class_name, start, due, link, recurring),
     )
     conn.commit()
     conn.close()
@@ -35,7 +36,7 @@ def get_all_deadlines():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, name, class, start, due, link FROM deadlines ORDER BY due"
+        "SELECT id, name, class, start, due, link, recurring FROM deadlines ORDER BY due"
     )
     rows = cursor.fetchall()
     conn.close()
