@@ -13,12 +13,28 @@ Create `.env`:
 BOT_TOKEN=your_token_here
 OWNER_ID=123456789
 CHAT_ID=123456789
+TOPIC_ID=
 ```
 
 Run:
 ```bash
-uv run python bot.py  
+uv run python bot.py
 ```
+
+## Server Deployment
+
+```bash
+sudo cp deadline-bot.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable deadline-bot
+sudo systemctl start deadline-bot
+```
+
+**Commands:**
+- Status: `sudo systemctl status deadline-bot`
+- Logs: `sudo journalctl -u deadline-bot -f`
+- Restart: `sudo systemctl restart deadline-bot`
+- Stop: `sudo systemctl stop deadline-bot`
 
 ## Commands
 
