@@ -5,7 +5,7 @@ from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, ContextTypes
 import dateparser
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from db import init_db, add_deadline, get_all_deadlines, get_soon_deadlines, delete_deadline
+from db import init_db, add_deadline, get_all_deadlines, get_soon_deadlines, delete_deadline, get_all_holidays
 from display import get_effective_dates, format_grouped, format_with_ids
 
 load_dotenv()
@@ -177,6 +177,26 @@ async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📌 Next up:\n\n" + format_grouped(top_3))
 
 
+async def holidays(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    holiday_list = get_all_holidays()
+
+    if not holiday_list:
+        await update.message.reply_text("No holidays added yet.")
+        return
+
+    lines = ["🗓 Holidays\n"]
+    for id, name, start_date, end_date in holiday_list:
+        if end_date:
+            start = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+            duration = (end - start).days + 1
+            lines.append(f"• {name}\n  {start_date} → {end_date} ({duration} days)\n")
+        else:
+            lines.append(f"• {name}\n  {start_date}\n")
+
+    await update.message.reply_text("\n".join(lines))
+
+
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id != OWNER_ID:
         await update.message.reply_text("Only admin can delete deadlines.")
@@ -280,6 +300,7 @@ def main():
     app.add_handler(CommandHandler("week", week))
     app.add_handler(CommandHandler("month", month))
     app.add_handler(CommandHandler("upcoming", upcoming))
+    app.add_handler(CommandHandler("holidays", holidays))
     app.add_handler(CommandHandler("delete", delete))
     app.add_handler(CommandHandler("test", test_notify))
 

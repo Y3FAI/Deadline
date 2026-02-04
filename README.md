@@ -11,6 +11,7 @@ Nothing fancy. It just works.
 - Auto reminders sent to group chat (24h and 1h before due)
 - Auto weekly summary every Saturday
 - Convenient commands to see what's due today, this week, or upcoming
+- Academic holidays calendar
 - Easy admin commands to add/delete deadlines
 - Flexible date parsing ("Mon 9am", "next Friday", etc.)
 - Auto server deployment with GitHub Actions
@@ -69,6 +70,7 @@ Add these secrets to your repo (Settings → Secrets → Actions):
 | /week | Due this week |
 | /month | Due this month |
 | /upcoming | Next 3 deadlines |
+| /holidays | Academic holidays |
 | /add | Add deadline (admin) |
 | /delete id | Delete deadline (admin) |
 | /test | Test notification (admin) |

@@ -17,6 +17,14 @@ def init_db():
             recurring TEXT
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS holidays (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -67,3 +75,12 @@ def delete_deadline(id):
     cursor.execute("DELETE FROM deadlines WHERE id = ?", (id,))
     conn.commit()
     conn.close()
+
+
+def get_all_holidays():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, start_date, end_date FROM holidays ORDER BY start_date")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
