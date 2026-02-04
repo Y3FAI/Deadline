@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from telegram import Update, Bot
+from telegram import Update, Bot, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes
 import dateparser
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -283,7 +283,16 @@ async def weekly_summary(bot: Bot):
 
 
 async def post_init(application):
-    """Start scheduler after application initializes."""
+    """Start scheduler and set bot commands."""
+    await application.bot.set_my_commands([
+        BotCommand("list", "All deadlines"),
+        BotCommand("today", "Due today"),
+        BotCommand("week", "Due this week"),
+        BotCommand("month", "Due this month"),
+        BotCommand("upcoming", "Next 3 deadlines"),
+        BotCommand("holidays", "Academic holidays"),
+    ])
+
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_reminders, "interval", hours=1, args=[application.bot])
     scheduler.add_job(weekly_summary, "cron", day_of_week="sat", hour=17, args=[application.bot])
