@@ -1,6 +1,19 @@
 # Deadline Bot
 
-Telegram bot for tracking deadlines.
+I built this because I kept worrying about assignment deadlines. When you have 6 classes with quizzes, assignments, and projects, keeping track of everything is a nightmare.
+
+So I made a simple Telegram bot that lives in my university group chat. I add deadlines once, and it handles the rest. It reminds me 24 hours before something is due, again at 1 hour, and sends a weekly summary every Saturday so I can plan ahead.
+
+Nothing fancy. It just works.
+
+## Features
+
+- Auto reminders sent to group chat (24h and 1h before due)
+- Weekly summary every Saturday
+- Convenient commands to see what's due today, this week, or upcoming
+- Easy admin commands to add/delete deadlines
+- Flexible date parsing ("Mon 9am", "next Friday", etc.)
+- Auto server deployment with GitHub Actions
 
 ## Setup
 
