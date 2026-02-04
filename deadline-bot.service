@@ -1,15 +1,18 @@
 [Unit]
 Description=Deadline Telegram Bot
 After=network.target
- 
+
 [Service]
 Type=simple
-User=yousef
-WorkingDirectory=/home/yousef/deadline
-ExecStart=/home/yousef/deadline/.venv/bin/python bot.py
+User=y3f
+WorkingDirectory=/home/y3f/bots/Deadline
+ExecStart=/home/y3f/bots/Deadline/.venv/bin/python bot.py
 Restart=always
 RestartSec=10
-EnvironmentFile=/home/yousef/deadline/.env
+EnvironmentFile=/home/y3f/bots/Deadline/.env
+
+[Install]
+WantedBy=multi-user.target
 
 [Install]
 WantedBy=multi-user.target
