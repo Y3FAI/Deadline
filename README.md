@@ -48,6 +48,7 @@ sudo systemctl start deadline-bot
 | /month | Due this month |
 | /add | Add deadline (admin) |
 | /delete id | Delete deadline (admin) |
+| /test | Test notification (admin) |
 
 ### Add examples
 
