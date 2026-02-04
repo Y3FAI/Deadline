@@ -151,6 +151,32 @@ async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(format_grouped(filtered))
 
 
+async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    deadlines = get_all_deadlines()
+
+    if not deadlines:
+        await update.message.reply_text("No deadlines 🎉")
+        return
+
+    # Sort by effective due date and take first 3
+    now = datetime.now()
+    sorted_deadlines = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt > now:
+            sorted_deadlines.append((due_dt, d))
+
+    sorted_deadlines.sort(key=lambda x: x[0])
+    top_3 = [d for _, d in sorted_deadlines[:3]]
+
+    if not top_3:
+        await update.message.reply_text("No upcoming deadlines 🎉")
+        return
+
+    await update.message.reply_text("📌 Next up:\n\n" + format_grouped(top_3))
+
+
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id != OWNER_ID:
         await update.message.reply_text("Only admin can delete deadlines.")
@@ -253,6 +279,7 @@ def main():
     app.add_handler(CommandHandler("today", today))
     app.add_handler(CommandHandler("week", week))
     app.add_handler(CommandHandler("month", month))
+    app.add_handler(CommandHandler("upcoming", upcoming))
     app.add_handler(CommandHandler("delete", delete))
     app.add_handler(CommandHandler("test", test_notify))
 

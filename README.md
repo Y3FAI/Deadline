@@ -36,6 +36,15 @@ sudo systemctl start deadline-bot
 - Restart: `sudo systemctl restart deadline-bot`
 - Stop: `sudo systemctl stop deadline-bot`
 
+## Auto Deploy
+
+Pushes to `main` auto-deploy via GitHub Actions.
+
+Add these secrets to your repo (Settings → Secrets → Actions):
+- `SERVER_IP`
+- `SERVER_USER`
+- `SSH_KEY`
+
 ## Commands
 
 | Command | Description |
@@ -46,6 +55,7 @@ sudo systemctl start deadline-bot
 | /today | Due today |
 | /week | Due this week |
 | /month | Due this month |
+| /upcoming | Next 3 deadlines |
 | /add | Add deadline (admin) |
 | /delete id | Delete deadline (admin) |
 | /test | Test notification (admin) |
