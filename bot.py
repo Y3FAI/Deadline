@@ -12,6 +12,7 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID"))
 CHAT_ID = int(os.getenv("CHAT_ID"))
+TOPIC_ID = int(os.getenv("TOPIC_ID") or 0) or None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -171,6 +172,20 @@ async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Deleted ✓")
 
 
+async def test_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send a test notification to the group."""
+    if update.message.from_user.id != OWNER_ID:
+        await update.message.reply_text("Only admin can test notifications.")
+        return
+
+    await context.bot.send_message(
+        CHAT_ID,
+        "🧪 Test notification\n\nBot is working!",
+        message_thread_id=TOPIC_ID
+    )
+    await update.message.reply_text("Test notification sent ✓")
+
+
 async def check_reminders(bot: Bot):
     """Check for deadlines and send reminders."""
     deadlines = get_all_deadlines()
@@ -184,13 +199,15 @@ async def check_reminders(bot: Bot):
         if 23 <= hours_until < 24:
             await bot.send_message(
                 CHAT_ID,
-                f"⏰ 24h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}"
+                f"⏰ 24h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}",
+                message_thread_id=TOPIC_ID
             )
         # 1h reminder: due in 1-2 hours
         elif 1 <= hours_until < 2:
             await bot.send_message(
                 CHAT_ID,
-                f"🚨 1h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}"
+                f"🚨 1h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}",
+                message_thread_id=TOPIC_ID
             )
 
 
@@ -199,7 +216,7 @@ async def weekly_summary(bot: Bot):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉")
+        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉", message_thread_id=TOPIC_ID)
         return
 
     now = datetime.now()
@@ -212,16 +229,24 @@ async def weekly_summary(bot: Bot):
             filtered.append(d)
 
     if not filtered:
-        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉")
+        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉", message_thread_id=TOPIC_ID)
         return
 
     msg = "📅 Weekly Summary\n\n" + format_grouped(filtered)
-    await bot.send_message(CHAT_ID, msg)
+    await bot.send_message(CHAT_ID, msg, message_thread_id=TOPIC_ID)
+
+
+async def post_init(application):
+    """Start scheduler after application initializes."""
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_reminders, "interval", hours=1, args=[application.bot])
+    scheduler.add_job(weekly_summary, "cron", day_of_week="sat", hour=17, args=[application.bot])
+    scheduler.start()
 
 
 def main():
     init_db()
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).post_init(post_init).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("add", add))
     app.add_handler(CommandHandler("list", list_deadlines))
@@ -229,11 +254,7 @@ def main():
     app.add_handler(CommandHandler("week", week))
     app.add_handler(CommandHandler("month", month))
     app.add_handler(CommandHandler("delete", delete))
-
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_reminders, "interval", hours=1, args=[app.bot])
-    scheduler.add_job(weekly_summary, "cron", day_of_week="sat", hour=17, args=[app.bot])
-    scheduler.start()
+    app.add_handler(CommandHandler("test", test_notify))
 
     app.run_polling()
 

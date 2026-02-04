@@ -17,7 +17,7 @@ CHAT_ID=123456789
 
 Run:
 ```bash
-python bot.py
+uv run python bot.py  
 ```
 
 ## Commands
