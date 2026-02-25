@@ -34,7 +34,7 @@ def format_deadline(name, start_dt, due_dt, link, recurring):
     line = f"  📝 {name}"
     if recurring:
         line += " 🔁"
-    line += f"\n  🟢 {start_formatted}\n  🔴 {due_formatted}"
+    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 التسليم: {due_formatted}"
     if link:
         line += f"\n  🔗 {link}"
     return line
@@ -47,7 +47,7 @@ def format_deadline_with_id(id, name, start_dt, due_dt, link, recurring):
     line = f"ID: {id}\n  📝 {name}"
     if recurring:
         line += " 🔁"
-    line += f"\n  🟢 {start_formatted}\n  🔴 {due_formatted}"
+    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 التسليم: {due_formatted}"
     if link:
         line += f"\n  🔗 {link}"
     return line
@@ -75,7 +75,7 @@ def format_grouped(deadlines):
 
 def format_with_ids(deadlines):
     """Format deadlines with IDs."""
-    lines = ["Deadlines with IDs:\n"]
+    lines = ["المواعيد مع المعرّفات:\n"]
     for id, name, class_name, start, due, link, recurring in deadlines:
         start_dt, due_dt = get_effective_dates(start, due, recurring)
         lines.append(format_deadline_with_id(id, name, start_dt, due_dt, link, recurring))

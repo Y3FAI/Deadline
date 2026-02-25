@@ -16,12 +16,12 @@ TOPIC_ID = int(os.getenv("TOPIC_ID") or 0) or None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! I track deadlines.")
+    await update.message.reply_text("أهلاً! أنا بوت متابعة المواعيد النهائية.")
 
 
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id != OWNER_ID:
-        await update.message.reply_text("Only admin can add deadlines.")
+        await update.message.reply_text("فقط المشرف يمكنه إضافة مواعيد.")
         return
 
     text = update.message.text.replace("/add ", "")
@@ -29,7 +29,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if len(parts) < 4:
         await update.message.reply_text(
-            "Format: /add class | name | start | due | link (optional)"
+            "الصيغة: /add المادة | الاسم | البداية | الموعد | رابط (اختياري)"
         )
         return
 
@@ -41,19 +41,19 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     recurring = parts[5].strip().lower() if len(parts) > 5 and parts[5].strip() else None
 
     if recurring and recurring != "weekly":
-        await update.message.reply_text("Only 'weekly' recurring is supported.")
+        await update.message.reply_text("فقط التكرار 'weekly' مدعوم.")
         return
 
     if not start:
-        await update.message.reply_text("Couldn't understand start date.")
+        await update.message.reply_text("ما قدرت أفهم تاريخ البداية.")
         return
 
     if not due:
-        await update.message.reply_text("Couldn't understand due date.")
+        await update.message.reply_text("ما قدرت أفهم تاريخ التسليم.")
         return
 
     add_deadline(name, class_name, start, due, link, recurring)
-    msg = f"Got it ✓\n{class_name} — {name}\n🟢 {start.strftime('%b %d %I:%M %p')}\n🔴 {due.strftime('%b %d %I:%M %p')}"
+    msg = f"تم ✓\n{class_name} — {name}\n🟢 {start.strftime('%b %d %I:%M %p')}\n🔴 {due.strftime('%b %d %I:%M %p')}"
     if recurring:
         msg += f"\n🔁 {recurring}"
     await update.message.reply_text(msg)
@@ -63,7 +63,7 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_all_deadlines()
 
     if not deadlines:
-        await update.message.reply_text("No deadlines 🎉")
+        await update.message.reply_text("ما في مواعيد 🎉")
         return
 
     text = update.message.text.replace("/list", "").strip()
@@ -76,7 +76,7 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         deadlines = [d for d in deadlines if d[2].lower() == text.lower()]
         if not deadlines:
-            await update.message.reply_text(f"No deadlines for {text}")
+            await update.message.reply_text(f"ما في مواعيد لـ {text}")
             return
 
     await update.message.reply_text(format_grouped(deadlines))
@@ -86,7 +86,7 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=1)
 
     if not deadlines:
-        await update.message.reply_text("No deadlines today 🎉")
+        await update.message.reply_text("ما في مواعيد اليوم 🎉")
         return
 
     now = datetime.now()
@@ -98,7 +98,7 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("No deadlines today 🎉")
+        await update.message.reply_text("ما في مواعيد اليوم 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -108,7 +108,7 @@ async def month(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=30)
 
     if not deadlines:
-        await update.message.reply_text("No deadlines this month 🎉")
+        await update.message.reply_text("ما في مواعيد هالشهر 🎉")
         return
 
     now = datetime.now()
@@ -121,7 +121,7 @@ async def month(update: Update, context: ContextTypes.DEFAULT_TYPE):
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("No deadlines this month 🎉")
+        await update.message.reply_text("ما في مواعيد هالشهر 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -131,7 +131,7 @@ async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await update.message.reply_text("No deadlines this week 🎉")
+        await update.message.reply_text("ما في مواعيد هالأسبوع 🎉")
         return
 
     # Filter recurring deadlines to only those due within 7 days
@@ -145,7 +145,7 @@ async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("No deadlines this week 🎉")
+        await update.message.reply_text("ما في مواعيد هالأسبوع 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -155,7 +155,7 @@ async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_all_deadlines()
 
     if not deadlines:
-        await update.message.reply_text("No deadlines 🎉")
+        await update.message.reply_text("ما في مواعيد 🎉")
         return
 
     # Sort by effective due date and take first 3
@@ -171,26 +171,26 @@ async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_3 = [d for _, d in sorted_deadlines[:3]]
 
     if not top_3:
-        await update.message.reply_text("No upcoming deadlines 🎉")
+        await update.message.reply_text("ما في مواعيد قادمة 🎉")
         return
 
-    await update.message.reply_text("📌 Next up:\n\n" + format_grouped(top_3))
+    await update.message.reply_text("📌 القادم:\n\n" + format_grouped(top_3))
 
 
 async def holidays(update: Update, context: ContextTypes.DEFAULT_TYPE):
     holiday_list = get_all_holidays()
 
     if not holiday_list:
-        await update.message.reply_text("No holidays added yet.")
+        await update.message.reply_text("ما في إجازات مضافة.")
         return
 
-    lines = ["🗓 Holidays\n"]
+    lines = ["🗓 الإجازات\n"]
     for id, name, start_date, end_date in holiday_list:
         if end_date:
             start = datetime.strptime(start_date, "%Y-%m-%d").date()
             end = datetime.strptime(end_date, "%Y-%m-%d").date()
             duration = (end - start).days + 1
-            lines.append(f"• {name}\n  {start_date} → {end_date} ({duration} days)\n")
+            lines.append(f"• {name}\n  {start_date} → {end_date} ({duration} يوم)\n")
         else:
             lines.append(f"• {name}\n  {start_date}\n")
 
@@ -199,37 +199,37 @@ async def holidays(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id != OWNER_ID:
-        await update.message.reply_text("Only admin can delete deadlines.")
+        await update.message.reply_text("فقط المشرف يمكنه حذف المواعيد.")
         return
 
     text = update.message.text.replace("/delete", "").strip()
 
     if not text:
-        await update.message.reply_text("Format: /delete id\n\nUse /list to see IDs.")
+        await update.message.reply_text("الصيغة: /delete id\n\nاستخدم /list لعرض المعرّفات.")
         return
 
     try:
         id = int(text)
     except ValueError:
-        await update.message.reply_text("ID must be a number.")
+        await update.message.reply_text("المعرّف لازم يكون رقم.")
         return
 
     delete_deadline(id)
-    await update.message.reply_text("Deleted ✓")
+    await update.message.reply_text("تم الحذف ✓")
 
 
 async def test_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a test notification to the group."""
     if update.message.from_user.id != OWNER_ID:
-        await update.message.reply_text("Only admin can test notifications.")
+        await update.message.reply_text("فقط المشرف يمكنه اختبار الإشعارات.")
         return
 
     await context.bot.send_message(
         CHAT_ID,
-        "🧪 Test notification\n\nBot is working!",
+        "🧪 إشعار تجريبي\n\nالبوت يعمل!",
         message_thread_id=TOPIC_ID
     )
-    await update.message.reply_text("Test notification sent ✓")
+    await update.message.reply_text("تم إرسال الإشعار التجريبي ✓")
 
 
 async def check_reminders(bot: Bot):
@@ -245,14 +245,14 @@ async def check_reminders(bot: Bot):
         if 23 <= hours_until < 24:
             await bot.send_message(
                 CHAT_ID,
-                f"⏰ 24h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}",
+                f"⏰ تذكير باقي ٢٤ ساعة على الموعد النهائي\n📚 {class_name} — {name}\n🔴 الموعد النهائي: {due_dt.strftime('%b %d, %I:%M %p')}",
                 message_thread_id=TOPIC_ID
             )
         # 1h reminder: due in 1-2 hours
         elif 1 <= hours_until < 2:
             await bot.send_message(
                 CHAT_ID,
-                f"🚨 1h reminder\n📚 {class_name} — {name}\n🔴 Due: {due_dt.strftime('%b %d, %I:%M %p')}",
+                f"🚨 تذكير باقي ساعة على الموعد النهائي\n📚 {class_name} — {name}\n🔴 الموعد النهائي: {due_dt.strftime('%b %d, %I:%M %p')}",
                 message_thread_id=TOPIC_ID
             )
 
@@ -262,7 +262,7 @@ async def weekly_summary(bot: Bot):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉", message_thread_id=TOPIC_ID)
+        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nما في مواعيد هالأسبوع 🎉", message_thread_id=TOPIC_ID)
         return
 
     now = datetime.now()
@@ -275,22 +275,22 @@ async def weekly_summary(bot: Bot):
             filtered.append(d)
 
     if not filtered:
-        await bot.send_message(CHAT_ID, "📅 Weekly Summary\n\nNo deadlines this week 🎉", message_thread_id=TOPIC_ID)
+        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nما في مواعيد هالأسبوع 🎉", message_thread_id=TOPIC_ID)
         return
 
-    msg = "📅 Weekly Summary\n\n" + format_grouped(filtered)
+    msg = "📅 ملخص الأسبوع\n\n" + format_grouped(filtered)
     await bot.send_message(CHAT_ID, msg, message_thread_id=TOPIC_ID)
 
 
 async def post_init(application):
     """Start scheduler and set bot commands."""
     await application.bot.set_my_commands([
-        BotCommand("list", "All deadlines"),
-        BotCommand("today", "Due today"),
-        BotCommand("week", "Due this week"),
-        BotCommand("month", "Due this month"),
-        BotCommand("upcoming", "Next 3 deadlines"),
-        BotCommand("holidays", "Academic holidays"),
+        BotCommand("list", "جميع المواعيد"),
+        BotCommand("today", "مواعيد اليوم"),
+        BotCommand("week", "مواعيد الأسبوع"),
+        BotCommand("month", "مواعيد الشهر"),
+        BotCommand("upcoming", "أقرب ٣ مواعيد"),
+        BotCommand("holidays", "الإجازات الأكاديمية"),
     ])
 
     scheduler = AsyncIOScheduler()
