@@ -34,7 +34,7 @@ def format_deadline(name, start_dt, due_dt, link, recurring):
     line = f"  📝 {name}"
     if recurring:
         line += " 🔁"
-    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 التسليم: {due_formatted}"
+    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 الموعد النهائي: {due_formatted}"
     if link:
         line += f"\n  🔗 {link}"
     return line
@@ -47,7 +47,7 @@ def format_deadline_with_id(id, name, start_dt, due_dt, link, recurring):
     line = f"ID: {id}\n  📝 {name}"
     if recurring:
         line += " 🔁"
-    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 التسليم: {due_formatted}"
+    line += f"\n  🟢 متاح: {start_formatted}\n  🔴 الموعد النهائي: {due_formatted}"
     if link:
         line += f"\n  🔗 {link}"
     return line

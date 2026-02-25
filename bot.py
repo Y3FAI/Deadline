@@ -49,7 +49,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not due:
-        await update.message.reply_text("ما قدرت أفهم تاريخ التسليم.")
+        await update.message.reply_text("ما قدرت أفهم الموعد النهائي.")
         return
 
     add_deadline(name, class_name, start, due, link, recurring)
@@ -63,7 +63,7 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_all_deadlines()
 
     if not deadlines:
-        await update.message.reply_text("ما في مواعيد 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية 🎉")
         return
 
     text = update.message.text.replace("/list", "").strip()
@@ -76,17 +76,30 @@ async def list_deadlines(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         deadlines = [d for d in deadlines if d[2].lower() == text.lower()]
         if not deadlines:
-            await update.message.reply_text(f"ما في مواعيد لـ {text}")
+            await update.message.reply_text(f"مافيه مواعيد نهائية لـ {text}")
             return
 
-    await update.message.reply_text(format_grouped(deadlines))
+    # Filter out past deadlines
+    now = datetime.now()
+    filtered = []
+    for d in deadlines:
+        id, name, class_name, start, due, link, recurring = d
+        _, due_dt = get_effective_dates(start, due, recurring)
+        if due_dt >= now:
+            filtered.append(d)
+
+    if not filtered:
+        await update.message.reply_text("مافيه مواعيد نهائية 🎉")
+        return
+
+    await update.message.reply_text(format_grouped(filtered))
 
 
 async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=1)
 
     if not deadlines:
-        await update.message.reply_text("ما في مواعيد اليوم 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية اليوم 🎉")
         return
 
     now = datetime.now()
@@ -94,11 +107,11 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for d in deadlines:
         id, name, class_name, start, due, link, recurring = d
         _, due_dt = get_effective_dates(start, due, recurring)
-        if due_dt.date() == now.date():
+        if due_dt.date() == now.date() and due_dt >= now:
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("ما في مواعيد اليوم 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية اليوم 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -108,7 +121,7 @@ async def month(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=30)
 
     if not deadlines:
-        await update.message.reply_text("ما في مواعيد هالشهر 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية هالشهر 🎉")
         return
 
     now = datetime.now()
@@ -117,11 +130,11 @@ async def month(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for d in deadlines:
         id, name, class_name, start, due, link, recurring = d
         _, due_dt = get_effective_dates(start, due, recurring)
-        if due_dt <= cutoff:
+        if now <= due_dt <= cutoff:
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("ما في مواعيد هالشهر 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية هالشهر 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -131,7 +144,7 @@ async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await update.message.reply_text("ما في مواعيد هالأسبوع 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية هالأسبوع 🎉")
         return
 
     # Filter recurring deadlines to only those due within 7 days
@@ -141,11 +154,11 @@ async def week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for d in deadlines:
         id, name, class_name, start, due, link, recurring = d
         _, due_dt = get_effective_dates(start, due, recurring)
-        if due_dt <= cutoff:
+        if now <= due_dt <= cutoff:
             filtered.append(d)
 
     if not filtered:
-        await update.message.reply_text("ما في مواعيد هالأسبوع 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية هالأسبوع 🎉")
         return
 
     await update.message.reply_text(format_grouped(filtered))
@@ -155,7 +168,7 @@ async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
     deadlines = get_all_deadlines()
 
     if not deadlines:
-        await update.message.reply_text("ما في مواعيد 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية 🎉")
         return
 
     # Sort by effective due date and take first 3
@@ -171,10 +184,10 @@ async def upcoming(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_3 = [d for _, d in sorted_deadlines[:3]]
 
     if not top_3:
-        await update.message.reply_text("ما في مواعيد قادمة 🎉")
+        await update.message.reply_text("مافيه مواعيد نهائية قادمة 🎉")
         return
 
-    await update.message.reply_text("📌 القادم:\n\n" + format_grouped(top_3))
+    await update.message.reply_text("📌 مواعيد نهائية قادمة:\n\n" + format_grouped(top_3))
 
 
 async def holidays(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -262,7 +275,7 @@ async def weekly_summary(bot: Bot):
     deadlines = get_soon_deadlines(days=7)
 
     if not deadlines:
-        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nما في مواعيد هالأسبوع 🎉", message_thread_id=TOPIC_ID)
+        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nمافيه مواعيد نهائية هالأسبوع 🎉", message_thread_id=TOPIC_ID)
         return
 
     now = datetime.now()
@@ -271,11 +284,11 @@ async def weekly_summary(bot: Bot):
     for d in deadlines:
         id, name, class_name, start, due, link, recurring = d
         _, due_dt = get_effective_dates(start, due, recurring)
-        if due_dt <= cutoff:
+        if now <= due_dt <= cutoff:
             filtered.append(d)
 
     if not filtered:
-        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nما في مواعيد هالأسبوع 🎉", message_thread_id=TOPIC_ID)
+        await bot.send_message(CHAT_ID, "📅 ملخص الأسبوع\n\nمافيه مواعيد نهائية هالأسبوع 🎉", message_thread_id=TOPIC_ID)
         return
 
     msg = "📅 ملخص الأسبوع\n\n" + format_grouped(filtered)
