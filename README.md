@@ -86,7 +86,7 @@ Add these secrets to your repo (Settings → Secrets → Actions):
 ## Auto Reminders
 
 - 24h and 1h before due dates
-- Weekly summary every Saturday at 5pm
+- Weekly summary every Saturday at 5pm (Riyadh time)
 
 ---
 

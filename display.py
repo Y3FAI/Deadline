@@ -1,14 +1,11 @@
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import timedelta
 import dateparser
-
-RIYADH_TZ = ZoneInfo("Asia/Riyadh")
-DATEPARSER_SETTINGS = {"TIMEZONE": "Asia/Riyadh", "RETURN_AS_TIMEZONE_AWARE": False}
+from time_config import DATEPARSER_SETTINGS, riyadh_now_naive
 
 
 def get_next_weekday_occurrence(dt):
     """Get the next occurrence of a weekday-based datetime."""
-    now = datetime.now(RIYADH_TZ).replace(tzinfo=None)
+    now = riyadh_now_naive()
     target_weekday = dt.weekday()
     days_ahead = target_weekday - now.weekday()
     if days_ahead < 0:

@@ -1,9 +1,8 @@
 import sqlite3
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import timedelta
+from time_config import riyadh_now_naive
 
 DB_NAME = "deadlines.db"
-RIYADH_TZ = ZoneInfo("Asia/Riyadh")
 
 
 def init_db():
@@ -56,7 +55,8 @@ def get_all_deadlines():
 
 def get_soon_deadlines(days=7):
     """Get non-recurring deadlines due within `days` + all recurring deadlines."""
-    cutoff = datetime.now(RIYADH_TZ).replace(tzinfo=None) + timedelta(days=days)
+    cutoff = riyadh_now_naive() + timedelta(days=days)
+    cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
@@ -66,7 +66,7 @@ def get_soon_deadlines(days=7):
            OR due <= ?
         ORDER BY due
         """,
-        (cutoff,),
+        (cutoff_str,),
     )
     rows = cursor.fetchall()
     conn.close()
