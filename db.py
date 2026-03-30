@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import timedelta
+from time_config import riyadh_now_naive
 
 DB_NAME = "deadlines.db"
 
@@ -53,16 +55,18 @@ def get_all_deadlines():
 
 def get_soon_deadlines(days=7):
     """Get non-recurring deadlines due within `days` + all recurring deadlines."""
+    cutoff = riyadh_now_naive() + timedelta(days=days)
+    cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
         """
         SELECT id, name, class, start, due, link, recurring FROM deadlines
         WHERE recurring IS NOT NULL
-           OR due <= datetime('now', '+' || ? || ' days')
+           OR due <= ?
         ORDER BY due
         """,
-        (days,),
+        (cutoff_str,),
     )
     rows = cursor.fetchall()
     conn.close()

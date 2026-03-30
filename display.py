@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 import dateparser
+from time_config import DATEPARSER_SETTINGS, riyadh_now_naive
 
 
 def get_next_weekday_occurrence(dt):
     """Get the next occurrence of a weekday-based datetime."""
-    now = datetime.now()
+    now = riyadh_now_naive()
     target_weekday = dt.weekday()
     days_ahead = target_weekday - now.weekday()
     if days_ahead < 0:
@@ -19,8 +20,8 @@ def get_next_weekday_occurrence(dt):
 
 def get_effective_dates(start, due, recurring):
     """Get effective start/due dates, calculating next occurrence for recurring."""
-    start_dt = dateparser.parse(start)
-    due_dt = dateparser.parse(due)
+    start_dt = dateparser.parse(start, settings=DATEPARSER_SETTINGS)
+    due_dt = dateparser.parse(due, settings=DATEPARSER_SETTINGS)
     if recurring == "weekly":
         start_dt = get_next_weekday_occurrence(start_dt)
         due_dt = get_next_weekday_occurrence(due_dt)
