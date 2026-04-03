@@ -53,6 +53,10 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("ما قدرت أفهم الموعد النهائي.")
         return
 
+    normalized_name = "".join(ch for ch in name.lower() if ch.isalnum())
+    if "midterm" in normalized_name:
+        due = start + timedelta(minutes=5)
+
     add_deadline(name, class_name, start, due, link, recurring)
     msg = f"تم ✓\n{class_name} — {name}\n🟢 {start.strftime('%b %d %I:%M %p')}\n🔴 {due.strftime('%b %d %I:%M %p')}"
     if recurring:
